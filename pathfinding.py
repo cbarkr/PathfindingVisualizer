@@ -38,8 +38,6 @@ class Node:
 		self.neighbour = []
 		self.total_rows = total_rows
 
-	#	Change these colours later for the sake of aesthetics
-
 	def getPos(self):
 		return self.row, self.col
 
@@ -150,10 +148,13 @@ def dijkstra(draw, grid, start, end):
 	pass
 
 def constructPath(cameFrom, curr, draw):
+	count = 0
 	while curr in cameFrom:
+		count += 1
 		curr = cameFrom[curr]
 		curr.setPath()
 		draw()
+	print("Path is " + str(count) + " nodes long")
 
 def setGrid(rows, width):
 	grid = []
@@ -225,11 +226,14 @@ def main(win, width):
 
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame. K_SPACE and start and end:
+					tic = time.perf_counter()
 					for row in grid:
 						for spot in row:
 							spot.updateNeighbour(grid)
 
 					astar(lambda: draw(win, grid, ROWS, width), grid, start, end)
+					toc = time.perf_counter()
+					print(f"Solved in {toc - tic:0.4f} seconds")
 
 				if event.key == pygame.K_c:
 					start = None
