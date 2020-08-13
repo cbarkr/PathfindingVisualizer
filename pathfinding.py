@@ -1,5 +1,6 @@
 import pygame
 import math
+import menu
 import time
 from queue import PriorityQueue
 
@@ -19,11 +20,11 @@ PURPLE = (128, 0, 128)
 ORANGE = (255, 165 ,0)
 GREY = (54, 54, 54)
 TURQUOISE = (64, 224, 208)
-_Blue = (1, 255, 255)
-_Mint = (1, 255, 195)
-_Pink = (255, 179, 253)
-_Purple = (157, 114, 255)
-_Grey = (192, 192, 192)
+Blueish = (1, 255, 255)
+Mintish = (1, 255, 195)
+Pinkish = (255, 179, 253)
+Purpleish = (157, 114, 255)
+Greyish = (192, 192, 192)
 
 
 class Node:
@@ -33,7 +34,7 @@ class Node:
 		self.width = width
 		self.x = row * width
 		self.y = col * width
-		self.color = WHITE
+		self.color = Greyish
 		self.neighbour = []
 		self.total_rows = total_rows
 
@@ -43,34 +44,34 @@ class Node:
 		return self.row, self.col
 
 	def isClosed(self):
-		return self.color == _Pink
+		return self.color == Pinkish
 
 	def isOpen(self):
-		return self.color == _Blue
+		return self.color == Blueish
 
 	def isWall(self):
 		return self.color == BLACK
 
 	def isStart(self):
-		return self.color == _Mint
+		return self.color == Mintish
 
 	def isEnd(self):
-		return self.color == _Purple
+		return self.color == Purpleish
 
 	def reset(self):
-		return self.color == _Grey
+		return self.color == Greyish
 
 	def setStart(self):
-		self.color = _Mint
+		self.color = Mintish
 
 	def setEnd(self):
-		self.color = _Purple
+		self.color = Purpleish
 
 	def setClosed(self):
-		self.color = _Pink
+		self.color = Pinkish
 
 	def setOpen(self):
-		self.color = _Blue
+		self.color = Blueish
 
 	def setWall(self):
 		self.color = BLACK
@@ -167,8 +168,8 @@ def setGrid(rows, width):
 def drawGrid(win, rows, width):
 	gap = width // rows
 	for i in range(rows):
-		pygame.draw.line(win, _Grey, (0, i * gap), (width, i * gap))
-		pygame.draw.line(win, _Grey, (i * gap, 0), (i * gap, width))
+		pygame.draw.line(win, WHITE, (0, i * gap), (width, i * gap))
+		pygame.draw.line(win, WHITE, (i * gap, 0), (i * gap, width))
 
 def draw(win, grid, rows, width):
 	win.fill(WHITE)
@@ -216,8 +217,10 @@ def main(win, width):
 				node = grid[row][col]
 				node.reset()
 				if node == start:
+					node.color = Greyish
 					start = None
 				elif node == end:
+					node.color = Greyish
 					end = None
 
 			if event.type == pygame.KEYDOWN:
