@@ -1,2 +1,2 @@
 # PathfindingVisualizer
-Visualizer for shortest path algorithms such as a* and dijkstra, made in pygame
+Visualizer for A* pathfinding made in pygame
