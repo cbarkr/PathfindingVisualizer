@@ -1,6 +1,6 @@
 import pygame
+import pygame_menu
 import math
-#import menu
 import time
 from queue import PriorityQueue
 
@@ -140,7 +140,7 @@ class Graph:
 		col = x // gap
 		return row, col
 
-	def heuristic(point1, point2):	#	Shortest distance between nodes using straight lines
+	def heuristic(point1, point2):	#	Return Manhattan distance
 		x1, y1 = point1
 		x2, y2 = point2
 		return abs(x1 - x2) + abs(y1 - y2)
@@ -151,7 +151,7 @@ class Graph:
 
 		traversedSet = {start}	#	Traversed nodes
 
-		camefrom = {}	#	Previous nodes
+		cameFrom = {}	#	Previous nodes
 
 		currentCost = {}
 		for row in grid:
@@ -174,7 +174,7 @@ class Graph:
 			traversedSet.remove(currentNode)	#	Keep track of traversed nodes by removing from other set
 
 			if currentNode == end:
-				Graph.constructPath(camefrom, end, draw)
+				Graph.constructPath(cameFrom, end, draw)
 				end.setEnd()
 				return True
 
@@ -182,7 +182,7 @@ class Graph:
 				newCost = currentCost[currentNode] + 1
 
 				if newCost < currentCost[node]:
-					camefrom[node] = currentNode
+					cameFrom[node] = currentNode
 					currentCost[node] = newCost
 					priorityCost[node] = newCost + Graph.heuristic(node.getPos(), end.getPos())
 
@@ -199,8 +199,57 @@ class Graph:
 		return False
 
 	def dijkstra(draw, grid, start, end):
-		pass
+		untraversedSet = PriorityQueue()	#	Untraversed nodes
+		untraversedSet.put((0, start))
 
+		traversedSet = {start}	#	Traversed nodes
+
+		cameFrom = {}	#	Previous nodes
+
+		currentCost = {}
+		for row in grid:
+			for point in row:
+				currentCost[point] = float("inf")	#	Initially set every entry to infinity
+		currentCost[start] = 0
+
+		priorityCost = {}
+		for row in grid:
+			for point in row:
+				priorityCost[point] = float("inf")	#	Initially set every entry to infinity
+		priorityCost[start] = 0
+
+		while not untraversedSet.empty():
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+
+			currentNode = untraversedSet.get()[1]
+			traversedSet.remove(currentNode)
+
+			if currentNode == end:
+				Graph.constructPath(cameFrom, end, draw)
+				end.setEnd()
+				return True
+
+			for node in currentNode.neighbour:
+				newCost = currentCost[currentNode] + 1
+
+				if newCost < currentCost[node]:
+					cameFrom[node] = currentNode
+					currentCost[node] = newCost
+					priorityCost[node] = newCost
+
+					if node not in traversedSet:
+						untraversedSet.put((priorityCost[node], node))
+						traversedSet.add(node)
+						node.setOpen()
+
+			draw()
+
+			if currentNode != start:
+				currentNode.setClosed()
+
+		return False
 """
 Main
 """
@@ -249,7 +298,11 @@ def main(win, width):
 							spot.updateNeighbour(grid)
 
 					inDraw = lambda: Graph.draw(win, grid, ROWS, width)
+
 					Graph.astar(inDraw, grid, start, end)
+
+					#Graph.dijkstra(inDraw, grid, start, end)
+					
 					toc = time.perf_counter()
 					print(f"Solved in {toc - tic:0.4f} seconds")
 
