@@ -7,6 +7,7 @@ from queue import PriorityQueue
 """
 Window Setup
 """
+pygame.init()
 WIDTH = 800
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("Path Finding Algorithms")
@@ -15,13 +16,59 @@ pygame.display.set_caption("Path Finding Algorithms")
 Colours
 """
 white = (255, 255, 255)
-black = (0, 0, 0)
-purple1 = (128, 0, 128)
-blue = (1, 255, 255)
-mint = (1, 255, 195)
-pink = (255, 179, 253)
-purple2 = (157, 114, 255)
 grey = (192, 192, 192)
+black = (0, 0, 0)
+
+pink = (255, 179, 253)
+mint = (1, 255, 195)
+turqoise1 = (93, 192, 172)
+turqoise2 = (54, 158, 145)
+blue = (1, 255, 255)
+lightBlue = (25, 151, 201)
+darkBlue = (12, 46, 82)
+purple1 = (128, 0, 128)
+purple2 = (157, 114, 255)
+
+"""
+Menu Setup
+"""
+selectedAlgorithm = 'A*'
+
+def selectAlgorithm(inAlgorithm, index):
+	global selectedAlgorithm
+	selectedAlgorithm = inAlgorithm[0]
+	return selectedAlgorithm
+
+def startPathfinding():
+	main(WIN, WIDTH, selectedAlgorithm)
+
+def instructions():
+	print("In progress!")
+
+font = pygame_menu.font.FONT_OPEN_SANS_LIGHT
+#myTheme = pygame_menu.themes.THEME_DARK.copy()
+myTheme = pygame_menu.themes.Theme(
+	widget_font = font,
+	title_font_color = white,
+	title_background_color = turqoise2,
+	widget_background_color = grey,
+	widget_font_color = black,
+	background_color = grey,
+	focus_background_color = (1, 255, 255, 157),
+	title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_ADAPTIVE,
+	selection_color = black,
+	menubar_close_button = False)
+
+
+mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding Visualizer")
+
+mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2)], onchange=selectAlgorithm)
+
+mainMenu.add_button('Start', startPathfinding)
+
+mainMenu.add_button('Help', instructions)
+
+mainMenu.add_button('Exit', pygame_menu.events.EXIT)
 
 """
 Node Class
@@ -139,6 +186,9 @@ class Graph:
 		row = y // gap
 		col = x // gap
 		return row, col
+	
+	def randomizeBarrier(draw, grid):	#	Implement before Jan 11
+		pass
 
 	def heuristic(point1, point2):	#	Return Manhattan distance
 		x1, y1 = point1
@@ -155,14 +205,14 @@ class Graph:
 
 		currentCost = {}
 		for row in grid:
-			for point in row:
-				currentCost[point] = float("inf")	#	Initially set every entry to infinity
+			for node in row:
+				currentCost[node] = float("inf")	#	Initially set every entry to infinity
 		currentCost[start] = 0
 
 		priorityCost = {}
 		for row in grid:
-			for point in row:
-				priorityCost[point] = float("inf")	#	Initially set every entry to infinity
+			for node in row:
+				priorityCost[node] = float("inf")	#	Initially set every entry to infinity
 		priorityCost[start] = Graph.heuristic(start.getPos(), end.getPos())
 
 		while not untraversedSet.empty():
@@ -198,7 +248,7 @@ class Graph:
 
 		return False
 
-	def dijkstra(draw, grid, start, end):
+	def dijkstra(draw, grid, start, end):	#	Basically A* but without heuristic
 		untraversedSet = PriorityQueue()	#	Untraversed nodes
 		untraversedSet.put((0, start))
 
@@ -253,7 +303,7 @@ class Graph:
 """
 Main
 """
-def main(win, width):
+def main(win, width, selectedAlgorithm):
 	ROWS = 50
 	grid = Graph.setGrid(ROWS, width)
 	start = None
@@ -283,12 +333,14 @@ def main(win, width):
 				row, col = Graph.getCLickPos(pos, ROWS, width)
 				node = grid[row][col]
 				node.reset()
-				if node == start:
+				if node == start:	#	Delete start node and select new one
 					node.color = grey
 					start = None
-				elif node == end:
+				elif node == end:	#	Delete end node and select new one
 					node.color = grey
 					end = None
+				elif node.isWall():	#	Delete barrier nodes and select new ones
+					node.color = grey
 
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame. K_SPACE and start and end:
@@ -299,18 +351,27 @@ def main(win, width):
 
 					inDraw = lambda: Graph.draw(win, grid, ROWS, width)
 
-					Graph.astar(inDraw, grid, start, end)
+					if selectedAlgorithm == 'A*':
+						Graph.astar(inDraw, grid, start, end)
 
-					#Graph.dijkstra(inDraw, grid, start, end)
+					elif selectedAlgorithm == 'Dijkstra':
+						Graph.dijkstra(inDraw, grid, start, end)
 					
 					toc = time.perf_counter()
 					print(f"Solved in {toc - tic:0.4f} seconds")
 
-				if event.key == pygame.K_c:
+				if event.key == pygame.K_c:	#	c == reset shortcut
 					start = None
 					end = None
 					grid = Graph.setGrid(ROWS, width)
 
+				if event.key == pygame.K_q:	#	q == quit shortcut
+					run = False
+					pygame.QUIT
+
+				if event.key == pygame.K_ESCAPE:
+					mainMenu.mainloop(WIN)
+
 	pygame.quit()
 
-main(WIN, WIDTH)
+mainMenu.mainloop(WIN)
