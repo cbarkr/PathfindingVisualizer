@@ -1,2 +1,2 @@
 # PathfindingVisualizer
-Visualizer for A* pathfinding made in pygame
+Visualizer for A* and Dijkstra pathfinding made in pygame
