@@ -32,7 +32,7 @@ purple2 = (157, 114, 255)
 """
 Menu Setup
 """
-selectedAlgorithm = 'A*'
+selectedAlgorithm = 'A*'	#	Set to A* by default
 
 def selectAlgorithm(inAlgorithm, index):
 	global selectedAlgorithm
@@ -62,7 +62,7 @@ myTheme = pygame_menu.themes.Theme(
 
 mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding Visualizer")
 
-mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2)], onchange=selectAlgorithm)
+mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS', 3)], onchange=selectAlgorithm)
 
 mainMenu.add_button('Start', startPathfinding)
 
@@ -148,13 +148,14 @@ Graph Class
 """
 class Graph:
 	def constructPath(cameFrom, curr, draw):
-		count = 0
+		global nodeCount
+		nodeCount = 0
 		while curr in cameFrom:
-			count += 1
+			nodeCount += 1
 			curr = cameFrom[curr]
 			curr.setPath()
 			draw()
-		print("Path is " + str(count) + " nodes long")
+		print("Path is " + str(nodeCount) + " nodes long")
 
 	def setGrid(rows, width):
 		grid = []
@@ -300,6 +301,41 @@ class Graph:
 				currentNode.setClosed()
 
 		return False
+
+	def bfs(draw, grid, start, end):
+		print("In progress!")
+		untraversedSet = {}
+		traversedSet = {start}
+
+		cameFrom = {}
+
+		while untraversedSet:
+
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+
+			currentNode = untraversedSet.pop(0)
+
+			if currentNode == end:
+				Graph.constructPath(cameFrom, end, draw)
+				end.setEnd()
+				return True
+
+			for node in currentNode.neighbour:
+				cameFrom[node] = currentNode
+				if currentNode.neighbour not in traversedSet:
+					traversedSet.add(currentNode.neighbour)
+					untraversedSet.append(currentNode.neighbour)
+					node.setOpen()
+
+			draw()
+
+			if currentNode != start:
+				currentNode.setClosed()
+
+		return False
+
 """
 Main
 """
@@ -309,6 +345,8 @@ def main(win, width, selectedAlgorithm):
 	start = None
 	end = None
 	run = True
+	global clock
+
 	while run:
 		Graph.draw(win, grid, ROWS, width)
 		for event in pygame.event.get():
@@ -343,11 +381,12 @@ def main(win, width, selectedAlgorithm):
 					node.color = grey
 
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame. K_SPACE and start and end:
-					tic = time.perf_counter()
+				if event.key == pygame. K_SPACE and start and end:	
 					for row in grid:
 						for spot in row:
 							spot.updateNeighbour(grid)
+
+					tic = time.perf_counter()	#	Timer start
 
 					inDraw = lambda: Graph.draw(win, grid, ROWS, width)
 
@@ -356,9 +395,14 @@ def main(win, width, selectedAlgorithm):
 
 					elif selectedAlgorithm == 'Dijkstra':
 						Graph.dijkstra(inDraw, grid, start, end)
+
+					elif selectedAlgorithm == 'BFS':
+						Graph.bfs(inDraw, grid, start, end)
 					
-					toc = time.perf_counter()
-					print(f"Solved in {toc - tic:0.4f} seconds")
+					toc = time.perf_counter()	#	Timer end
+					clock = toc - tic
+
+					print(f"Solved in {clock:0.4f} seconds")
 
 				if event.key == pygame.K_c:	#	c == reset shortcut
 					start = None
@@ -371,6 +415,15 @@ def main(win, width, selectedAlgorithm):
 
 				if event.key == pygame.K_ESCAPE:
 					mainMenu.mainloop(WIN)
+
+"""	pygame.font.init()	#	In progress!
+	mainFont = pygame.font.SysFont('Arial', 50)
+					
+	clockLabel = mainFont.render(f"Time:  {clock}", True, black)
+	nodeCountLabel = mainFont.render(f"Nodes: {nodeCount}", True, black)
+
+	WIN.blit(clockLabel, (10, 10))
+	WIN.blit(nodeCountLabel, (WIDTH - nodeCountLabel.get_width() - 10, 10))"""
 
 	pygame.quit()
 
