@@ -34,7 +34,7 @@ purple2 = (157, 114, 255)
 """
 Menu Setup
 """
-selectedAlgorithm = 'A*'	#	Set to A* by default
+selectedAlgorithm = 0	#	Set to A* by default
 barrierPercent = 0	#	Set to 0% randomly generated barrier by default
 
 themeFont = pygame_menu.font.FONT_OPEN_SANS_LIGHT
@@ -53,7 +53,7 @@ myTheme = pygame_menu.themes.Theme(
 
 def selectAlgorithm(inAlgorithm, index):
 	global selectedAlgorithm
-	selectedAlgorithm = inAlgorithm[0]
+	selectedAlgorithm = inAlgorithm[1]
 	return selectedAlgorithm
 
 def randomBarrierPercent(displayPercent, index):
@@ -66,6 +66,7 @@ def startPathfinding():
 
 mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding Visualizer")
 instructionsMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Instructions", column_force_fit_text = True)
+endMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "End", column_force_fit_text = True)
 
 mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS (In progress!)', 3)], onchange = selectAlgorithm)
 mainMenu.add_selector('Random Barrier %: ', [('0%', 1), ('10%', 2), ('20%', 3), ('30%', 4), ('40%', 5), ('50%', 6), ('60%', 7), ('70%', 8), ('80%', 9), ('90%', 10)], onchange = randomBarrierPercent)
@@ -74,14 +75,17 @@ mainMenu.add_button(instructionsMenu.get_title(), instructionsMenu)
 mainMenu.add_button('Exit', pygame_menu.events.EXIT)
 
 instructions1 = "LEFT MOUSE: set nodes"
-instructions2 = "node 1 = start, node 2 = end, node >2 = barrier"
-instructions3 = "RIGHT MOUSE: remove nodes "
-instructions4 = "SPACE KEY: start pathfinding"
-instructions5 = "C KEY: clear the board"
-instructions6 = "Q KEY: quit"
-instructions7 = "ESC KEY: open the menu"
+instructions2 = "- click 1: set start"
+instructions3 = "- click 2: set end"
+instructions4 = "- click >2: set barrier"
+instructions5 = "RIGHT MOUSE: remove nodes "
+instructions6 = "SPACE KEY: start pathfinding"
+instructions7 = "C KEY: clear the board"
+instructions8 = "Q KEY: quit"
+instructions9 = "R KEY: display results"
+instructions10 = "ESC KEY: open the menu"
 
-instructionsMenu.add_button('Return', pygame_menu.events.RESET)
+instructionsMenu.add_button('Return', mainMenu)
 instructionsMenu.add_label(instructions1, font_size = 20)
 instructionsMenu.add_label(instructions2, font_size = 20)
 instructionsMenu.add_label(instructions3, font_size = 20)
@@ -89,6 +93,11 @@ instructionsMenu.add_label(instructions4, font_size = 20)
 instructionsMenu.add_label(instructions5, font_size = 20)
 instructionsMenu.add_label(instructions6, font_size = 20)
 instructionsMenu.add_label(instructions7, font_size = 20)
+instructionsMenu.add_label(instructions8, font_size = 20)
+instructionsMenu.add_label(instructions9, font_size = 20)
+instructionsMenu.add_label(instructions10, font_size = 20)
+
+endMenu.add_button('Return', mainMenu)
 
 """
 Node Class
@@ -166,16 +175,16 @@ class Node:
 """
 Graph Class
 """
+nodeCount = 0
 class Graph:
 	def constructPath(cameFrom, curr, draw):
 		global nodeCount
-		nodeCount = 0
 		while curr in cameFrom:
 			nodeCount += 1
 			curr = cameFrom[curr]
 			curr.setPath()
 			draw()
-		print("Path is " + str(nodeCount) + " nodes long")
+		#print("Path is " + str(nodeCount) + " nodes long")	#	Optionally print results
 
 	def setGrid(rows, width):
 		grid = []
@@ -196,10 +205,10 @@ class Graph:
 	def drawRandomBarrier(grid, rows, randomBarrierAmount):
 		node = None
 		for i in range(randomBarrierAmount):
-			randomx = random.randrange(rows)
-			randomy = random.randrange(rows)
+			randomx = random.randrange(rows)	#	Obtain random x value in row
+			randomy = random.randrange(rows)	#	Obtain random y value in column
 			node = grid[randomx][randomy]
-			node.setWall()
+			node.setWall()	#	Set random node as barrier
 
 	def draw(win, grid, rows, width):
 		win.fill(white)
@@ -250,19 +259,19 @@ class Graph:
 			traversedSet.remove(currentNode)	#	Keep track of traversed nodes by removing from other set
 
 			if currentNode == end:
-				Graph.constructPath(cameFrom, end, draw)
-				end.setEnd()
+				Graph.constructPath(cameFrom, end, draw)	#	Draw path from list of nodes gathered
+				end.setEnd()	
 				return True
 
 			for node in currentNode.neighbour:
-				newCost = currentCost[currentNode] + 1
+				newCost = currentCost[currentNode] + 1	#	New cost is greater than current cost at current node
 
-				if newCost < currentCost[node]:
+				if newCost < currentCost[node]:	#	Check new cost against the cost of the neighbouring node
 					cameFrom[node] = currentNode
 					currentCost[node] = newCost
-					priorityCost[node] = newCost + Graph.heuristic(node.getPos(), end.getPos())
+					priorityCost[node] = newCost + Graph.heuristic(node.getPos(), end.getPos())	#	Prioritize cost of Manhattan distance between neighbour and end
 
-					if node not in traversedSet:
+					if node not in traversedSet:	#	Checking nodes that have not been traversed
 						untraversedSet.put((priorityCost[node], node))
 						traversedSet.add(node)
 						node.setOpen()
@@ -272,6 +281,7 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
+		print("Path not found")
 		return False
 
 	def dijkstra(draw, grid, start, end):	#	Basically A* but without heuristic
@@ -299,23 +309,23 @@ class Graph:
 				if event.type == pygame.QUIT:
 					pygame.quit()
 
-			currentNode = untraversedSet.get()[1]
-			traversedSet.remove(currentNode)
+			currentNode = untraversedSet.get()[1]	#	Retrieve node from set
+			traversedSet.remove(currentNode)	#	Keep track of traversed nodes by removing from other set
 
 			if currentNode == end:
-				Graph.constructPath(cameFrom, end, draw)
+				Graph.constructPath(cameFrom, end, draw)	#	Draw path from list of nodes gathered
 				end.setEnd()
 				return True
 
 			for node in currentNode.neighbour:
-				newCost = currentCost[currentNode] + 1
+				newCost = currentCost[currentNode] + 1	#	New cost is greater than current cost at current node
 
-				if newCost < currentCost[node]:
+				if newCost < currentCost[node]:	#	Check new cost against the cost of the neighbouring node
 					cameFrom[node] = currentNode
 					currentCost[node] = newCost
 					priorityCost[node] = newCost
 
-					if node not in traversedSet:
+					if node not in traversedSet:	#	Checking nodes that have not been traversed
 						untraversedSet.put((priorityCost[node], node))
 						traversedSet.add(node)
 						node.setOpen()
@@ -325,6 +335,7 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
+		print("Path not found")
 		return False
 
 	def bfs(draw, grid, start, end):
@@ -359,6 +370,7 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
+		print("Path not found")
 		return False
 
 """
@@ -420,21 +432,27 @@ def main(win, width, selectedAlgorithm, barrierPercent):
 
 					inDraw = lambda: Graph.draw(win, grid, ROWS, width)
 
-					if selectedAlgorithm == 'A*':
+					if selectedAlgorithm == 0:	#	0 == A*
 						Graph.astar(inDraw, grid, start, end)
 
-					elif selectedAlgorithm == 'Dijkstra':
+					elif selectedAlgorithm == 1:	#	1 == Dijkstra
 						Graph.dijkstra(inDraw, grid, start, end)
 
-					elif selectedAlgorithm == 'BFS':
+					elif selectedAlgorithm == 2:	#	2 == BFS9
 						Graph.bfs(inDraw, grid, start, end)
 					
 					toc = time.perf_counter()	#	Timer end
-					timer = toc - tic
+					timer = (toc - tic)
 
-					print(f"Solved in {timer:0.4f} seconds")
+					#print(f"Solved in {timer:0.4f} seconds")	#	Optionally print results
 
-				if event.key == pygame.K_c:	#	c == reset shortcut
+
+				if event.key == pygame.K_r:	#	r == results shortcut
+					endMenu.add_label('Solved in ' + '{:0.4f}'.format(timer) + ' seconds', font_size = 20)
+					endMenu.add_label('Path is ' + str(nodeCount) + ' nodes long', font_size = 20)
+					endMenu.mainloop(win)
+
+				if event.key == pygame.K_c:	#	c == clear shortcut
 					start = None
 					end = None
 					grid = Graph.setGrid(ROWS, width)
@@ -450,19 +468,5 @@ def main(win, width, selectedAlgorithm, barrierPercent):
 					mainMenu.mainloop(WIN)
 
 	pygame.quit()
-
-"""	
-
-	In progress!
-	Hoping to display the time taken to find the shortest path and the amount of nodes in that path
-
-	pygame.font.init()
-	mainFont = pygame.font.SysFont('Arial', 50)
-					
-	timerLabel = mainFont.render(f"Time:  {timer}", True, black)
-	nodeCountLabel = mainFont.render(f"Nodes: {nodeCount}", True, black)
-
-	WIN.blit(timerLabel, (10, 10))
-	WIN.blit(nodeCountLabel, (WIDTH - nodeCountLabel.get_width() - 10, 10))"""
 
 mainMenu.mainloop(WIN)
