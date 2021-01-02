@@ -1,16 +1,18 @@
 import pygame
 import pygame_menu
 import math
+import random
 import time
 from queue import PriorityQueue
 
 """
 Window Setup
 """
-pygame.init()
 WIDTH = 800
+pygame.init()
+clock = pygame.time.Clock()
+pygame.display.set_caption(" ")
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
-pygame.display.set_caption("Path Finding Algorithms")
 windowFont = pygame.font.SysFont("Open Sans Light", 18)
 """
 Colours
@@ -33,8 +35,7 @@ purple2 = (157, 114, 255)
 Menu Setup
 """
 selectedAlgorithm = 'A*'	#	Set to A* by default
-randomizedBarrier = False
-clock = pygame.time.Clock()
+barrierPercent = 0	#	Set to 0% randomly generated barrier by default
 
 themeFont = pygame_menu.font.FONT_OPEN_SANS_LIGHT
 #myTheme = pygame_menu.themes.THEME_DARK.copy()
@@ -55,13 +56,19 @@ def selectAlgorithm(inAlgorithm, index):
 	selectedAlgorithm = inAlgorithm[0]
 	return selectedAlgorithm
 
+def randomBarrierPercent(displayPercent, index):
+	global barrierPercent
+	barrierPercent = (index - 1) * 10
+	return barrierPercent
+
 def startPathfinding():
-	main(WIN, WIDTH, selectedAlgorithm)
+	main(WIN, WIDTH, selectedAlgorithm, barrierPercent)
 
 mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding Visualizer")
 instructionsMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Instructions", column_force_fit_text = True)
 
-mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS (In progress!)', 3)], onchange=selectAlgorithm)
+mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS (In progress!)', 3)], onchange = selectAlgorithm)
+mainMenu.add_selector('Random Barrier %: ', [('0%', 1), ('10%', 2), ('20%', 3), ('30%', 4), ('40%', 5), ('50%', 6), ('60%', 7), ('70%', 8), ('80%', 9), ('90%', 10)], onchange = randomBarrierPercent)
 mainMenu.add_button('Start', startPathfinding)
 mainMenu.add_button(instructionsMenu.get_title(), instructionsMenu)
 mainMenu.add_button('Exit', pygame_menu.events.EXIT)
@@ -69,9 +76,10 @@ mainMenu.add_button('Exit', pygame_menu.events.EXIT)
 instructions1 = "LEFT MOUSE: set nodes"
 instructions2 = "node 1 = start, node 2 = end, node >2 = barrier"
 instructions3 = "RIGHT MOUSE: remove nodes "
-instructions4 = "C KEY: clear the board"
-instructions5 = "Q KEY: quit"
-instructions6 = "Esc KEY: open the menu"
+instructions4 = "SPACE KEY: start pathfinding"
+instructions5 = "C KEY: clear the board"
+instructions6 = "Q KEY: quit"
+instructions7 = "ESC KEY: open the menu"
 
 instructionsMenu.add_button('Return', pygame_menu.events.RESET)
 instructionsMenu.add_label(instructions1, font_size = 20)
@@ -80,6 +88,7 @@ instructionsMenu.add_label(instructions3, font_size = 20)
 instructionsMenu.add_label(instructions4, font_size = 20)
 instructionsMenu.add_label(instructions5, font_size = 20)
 instructionsMenu.add_label(instructions6, font_size = 20)
+instructionsMenu.add_label(instructions7, font_size = 20)
 
 """
 Node Class
@@ -184,6 +193,14 @@ class Graph:
 			pygame.draw.line(win, white, (0, i * gap), (width, i * gap))
 			pygame.draw.line(win, white, (i * gap, 0), (i * gap, width))
 
+	def drawRandomBarrier(grid, rows, randomBarrierAmount):
+		node = None
+		for i in range(randomBarrierAmount):
+			randomx = random.randrange(rows)
+			randomy = random.randrange(rows)
+			node = grid[randomx][randomy]
+			node.setWall()
+
 	def draw(win, grid, rows, width):
 		win.fill(white)
 		for row in grid:
@@ -214,14 +231,14 @@ class Graph:
 
 		currentCost = {}
 		for row in grid:
-			for node in row:
-				currentCost[node] = float("inf")	#	Initially set every entry to infinity
+			for point in row:
+				currentCost[point] = float("inf")	#	Initially set every entry to infinity
 		currentCost[start] = 0
 
 		priorityCost = {}
 		for row in grid:
-			for node in row:
-				priorityCost[node] = float("inf")	#	Initially set every entry to infinity
+			for point in row:
+				priorityCost[point] = float("inf")	#	Initially set every entry to infinity
 		priorityCost[start] = Graph.heuristic(start.getPos(), end.getPos())
 
 		while not untraversedSet.empty():
@@ -347,16 +364,21 @@ class Graph:
 """
 Main
 """
-def main(win, width, selectedAlgorithm):
+def main(win, width, selectedAlgorithm, barrierPercent):
 	ROWS = 50
 	grid = Graph.setGrid(ROWS, width)
 	start = None
 	end = None
+	randomBarrierAmount = int((barrierPercent / 100) * (ROWS * ROWS))
 	run = True
 	global timer
 
+	if barrierPercent != 0:
+			Graph.drawRandomBarrier(grid, ROWS, randomBarrierAmount)
+
 	while run:
 		Graph.draw(win, grid, ROWS, width)
+
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				run = False
@@ -416,6 +438,9 @@ def main(win, width, selectedAlgorithm):
 					start = None
 					end = None
 					grid = Graph.setGrid(ROWS, width)
+
+					if barrierPercent != 0:
+						Graph.drawRandomBarrier(grid, ROWS, randomBarrierAmount)
 
 				if event.key == pygame.K_q:	#	q == quit shortcut
 					run = False
