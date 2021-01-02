@@ -11,7 +11,7 @@ pygame.init()
 WIDTH = 800
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("Path Finding Algorithms")
-
+windowFont = pygame.font.SysFont("Open Sans Light", 18)
 """
 Colours
 """
@@ -33,22 +33,13 @@ purple2 = (157, 114, 255)
 Menu Setup
 """
 selectedAlgorithm = 'A*'	#	Set to A* by default
+randomizedBarrier = False
+clock = pygame.time.Clock()
 
-def selectAlgorithm(inAlgorithm, index):
-	global selectedAlgorithm
-	selectedAlgorithm = inAlgorithm[0]
-	return selectedAlgorithm
-
-def startPathfinding():
-	main(WIN, WIDTH, selectedAlgorithm)
-
-def instructions():
-	print("In progress!")
-
-font = pygame_menu.font.FONT_OPEN_SANS_LIGHT
+themeFont = pygame_menu.font.FONT_OPEN_SANS_LIGHT
 #myTheme = pygame_menu.themes.THEME_DARK.copy()
 myTheme = pygame_menu.themes.Theme(
-	widget_font = font,
+	widget_font = themeFont,
 	title_font_color = white,
 	title_background_color = turqoise2,
 	widget_background_color = grey,
@@ -59,16 +50,36 @@ myTheme = pygame_menu.themes.Theme(
 	selection_color = black,
 	menubar_close_button = False)
 
+def selectAlgorithm(inAlgorithm, index):
+	global selectedAlgorithm
+	selectedAlgorithm = inAlgorithm[0]
+	return selectedAlgorithm
+
+def startPathfinding():
+	main(WIN, WIDTH, selectedAlgorithm)
 
 mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding Visualizer")
+instructionsMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Instructions", column_force_fit_text = True)
 
-mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS', 3)], onchange=selectAlgorithm)
-
+mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS (In progress!)', 3)], onchange=selectAlgorithm)
 mainMenu.add_button('Start', startPathfinding)
-
-mainMenu.add_button('Help', instructions)
-
+mainMenu.add_button(instructionsMenu.get_title(), instructionsMenu)
 mainMenu.add_button('Exit', pygame_menu.events.EXIT)
+
+instructions1 = "LEFT MOUSE: set nodes"
+instructions2 = "node 1 = start, node 2 = end, node >2 = barrier"
+instructions3 = "RIGHT MOUSE: remove nodes "
+instructions4 = "C KEY: clear the board"
+instructions5 = "Q KEY: quit"
+instructions6 = "Esc KEY: open the menu"
+
+instructionsMenu.add_button('Return', pygame_menu.events.RESET)
+instructionsMenu.add_label(instructions1, font_size = 20)
+instructionsMenu.add_label(instructions2, font_size = 20)
+instructionsMenu.add_label(instructions3, font_size = 20)
+instructionsMenu.add_label(instructions4, font_size = 20)
+instructionsMenu.add_label(instructions5, font_size = 20)
+instructionsMenu.add_label(instructions6, font_size = 20)
 
 """
 Node Class
@@ -187,9 +198,6 @@ class Graph:
 		row = y // gap
 		col = x // gap
 		return row, col
-	
-	def randomizeBarrier(draw, grid):	#	Implement before Jan 11
-		pass
 
 	def heuristic(point1, point2):	#	Return Manhattan distance
 		x1, y1 = point1
@@ -345,7 +353,7 @@ def main(win, width, selectedAlgorithm):
 	start = None
 	end = None
 	run = True
-	global clock
+	global timer
 
 	while run:
 		Graph.draw(win, grid, ROWS, width)
@@ -400,9 +408,9 @@ def main(win, width, selectedAlgorithm):
 						Graph.bfs(inDraw, grid, start, end)
 					
 					toc = time.perf_counter()	#	Timer end
-					clock = toc - tic
+					timer = toc - tic
 
-					print(f"Solved in {clock:0.4f} seconds")
+					print(f"Solved in {timer:0.4f} seconds")
 
 				if event.key == pygame.K_c:	#	c == reset shortcut
 					start = None
@@ -416,15 +424,20 @@ def main(win, width, selectedAlgorithm):
 				if event.key == pygame.K_ESCAPE:
 					mainMenu.mainloop(WIN)
 
-"""	pygame.font.init()	#	In progress!
+	pygame.quit()
+
+"""	
+
+	In progress!
+	Hoping to display the time taken to find the shortest path and the amount of nodes in that path
+
+	pygame.font.init()
 	mainFont = pygame.font.SysFont('Arial', 50)
 					
-	clockLabel = mainFont.render(f"Time:  {clock}", True, black)
+	timerLabel = mainFont.render(f"Time:  {timer}", True, black)
 	nodeCountLabel = mainFont.render(f"Nodes: {nodeCount}", True, black)
 
-	WIN.blit(clockLabel, (10, 10))
+	WIN.blit(timerLabel, (10, 10))
 	WIN.blit(nodeCountLabel, (WIDTH - nodeCountLabel.get_width() - 10, 10))"""
-
-	pygame.quit()
 
 mainMenu.mainloop(WIN)
