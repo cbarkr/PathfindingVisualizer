@@ -14,6 +14,7 @@ clock = pygame.time.Clock()
 pygame.display.set_caption(" ")
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 windowFont = pygame.font.SysFont("Open Sans Light", 18)
+
 """
 Colours
 """
@@ -68,7 +69,7 @@ mainMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Pathfinding 
 instructionsMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "Instructions", column_force_fit_text = True)
 endMenu = pygame_menu.Menu(WIDTH, WIDTH, theme = myTheme, title = "End", column_force_fit_text = True)
 
-mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS (In progress!)', 3)], onchange = selectAlgorithm)
+mainMenu.add_selector('Algorithm: ', [('A*', 1), ('Dijkstra', 2), ('BFS', 3)], onchange = selectAlgorithm)
 mainMenu.add_selector('Random Barrier %: ', [('0%', 1), ('10%', 2), ('20%', 3), ('30%', 4), ('40%', 5), ('50%', 6), ('60%', 7), ('70%', 8), ('80%', 9), ('90%', 10)], onchange = randomBarrierPercent)
 mainMenu.add_button('Start', startPathfinding)
 mainMenu.add_button(instructionsMenu.get_title(), instructionsMenu)
@@ -250,7 +251,7 @@ class Graph:
 				priorityCost[point] = float("inf")	#	Initially set every entry to infinity
 		priorityCost[start] = Graph.heuristic(start.getPos(), end.getPos())
 
-		while not untraversedSet.empty():
+		while not untraversedSet.empty():	#	Iterate through untraversed nodes
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					pygame.quit()
@@ -281,7 +282,7 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
-		print("Path not found")
+		#print("Path not found")	#	Optionally print results
 		return False
 
 	def dijkstra(draw, grid, start, end):	#	Basically A* but without heuristic
@@ -304,7 +305,7 @@ class Graph:
 				priorityCost[point] = float("inf")	#	Initially set every entry to infinity
 		priorityCost[start] = 0
 
-		while not untraversedSet.empty():
+		while not untraversedSet.empty():	#	Iterate through untraversed nodes
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					pygame.quit()
@@ -335,34 +336,34 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
-		print("Path not found")
+		#print("Path not found")	#	Optionally print results
 		return False
 
 	def bfs(draw, grid, start, end):
-		print("In progress!")
-		untraversedSet = {}
-		traversedSet = {start}
-
+		untraversedSet = []
+		traversedSet = []
 		cameFrom = {}
 
-		while untraversedSet:
+		untraversedSet.append(start)
+		traversedSet.append(start)
 
+		while untraversedSet:	#	Iterate through untraversed nodes
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					pygame.quit()
 
-			currentNode = untraversedSet.pop(0)
+			currentNode = untraversedSet.pop(0)	#	Starts at start node
 
 			if currentNode == end:
-				Graph.constructPath(cameFrom, end, draw)
+				Graph.constructPath(cameFrom, end, draw)	#	Draw path from list of nodes gathered
 				end.setEnd()
 				return True
 
 			for node in currentNode.neighbour:
-				cameFrom[node] = currentNode
-				if currentNode.neighbour not in traversedSet:
-					traversedSet.add(currentNode.neighbour)
-					untraversedSet.append(currentNode.neighbour)
+				if node not in traversedSet:	#	Checking nodes that have not been traversed
+					cameFrom[node] = currentNode
+					traversedSet.append(node)
+					untraversedSet.append(node)
 					node.setOpen()
 
 			draw()
@@ -370,7 +371,7 @@ class Graph:
 			if currentNode != start:
 				currentNode.setClosed()
 
-		print("Path not found")
+		#print("Path not found")	#	Optionally print results
 		return False
 
 """
@@ -449,7 +450,12 @@ def main(win, width, selectedAlgorithm, barrierPercent):
 
 				if event.key == pygame.K_r:	#	r == results shortcut
 					endMenu.add_label('Solved in ' + '{:0.4f}'.format(timer) + ' seconds', font_size = 20)
-					endMenu.add_label('Path is ' + str(nodeCount) + ' nodes long', font_size = 20)
+					if nodeCount > 0:
+						endMenu.add_label('Path is ' + str(nodeCount) + ' nodes long', font_size = 20)
+
+					else:
+						endMenu.add_label('Path not found', font_size = 20)
+
 					endMenu.mainloop(win)
 
 				if event.key == pygame.K_c:	#	c == clear shortcut
