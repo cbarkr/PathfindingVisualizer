@@ -86,7 +86,7 @@ instructions8 = "Q KEY: quit"
 instructions9 = "R KEY: display results"
 instructions10 = "ESC KEY: open the menu"
 
-instructionsMenu.add_button('Return', mainMenu)
+instructionsMenu.add_button('Return', pygame_menu.events.RESET)
 instructionsMenu.add_label(instructions1, font_size = 20)
 instructionsMenu.add_label(instructions2, font_size = 20)
 instructionsMenu.add_label(instructions3, font_size = 20)
