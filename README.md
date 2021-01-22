@@ -1,7 +1,5 @@
 # PathfindingVisualizer
 
----
-
 Visualization for A*, Dijkstra, and BFS pathfinding in pygame
 
 ---
