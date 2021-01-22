@@ -7,9 +7,7 @@ Visualizer for A*, Dijkstra, and BFS pathfinding made in pygame
 
 **Requirements:**
 - [Pygame](https://pypi.org/project/pygame/)
-
 `pip install pygame`
 
 - [Pygame_menu](https://pypi.org/project/pygame-menu/)
-
 `pip install pygame-menu`
